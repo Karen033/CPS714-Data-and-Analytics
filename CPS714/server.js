@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 5001;
 
 // Supabase configuration
 const supabaseUrl = 'https://whkhxoqclrbwsapozcsx.supabase.co';
-const supabaseKey = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoa2h4b3FjbHJid3NhcG96Y3N4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMDkyMjY5MywiZXhwIjoyMDQ2NDk4NjkzfQ.R38BFg2TCYj0JjbaVx5EPRoo6SfCHSXBbF2VTz2SAhc'; 
+const supabaseKey = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoa2h4b3FjbHJid3NhcG96Y3N4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMDkyMjY5MywiZXhwIjoyMDQ2NDk4NjkzfQ.R38BFg2TCYj0JjbaVx5EPRoo6SfCHSXBbF2VTz2SAhc';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Middleware
@@ -19,20 +19,29 @@ app.post('/api/generate-reports', async (req, res) => {
   try {
     console.log('Starting report generation...');
 
-    // Fetch users data
+    // Fetch user data
     const { data: usersData, error: usersError } = await supabase
       .from('01_users')
       .select('user_id, created_at');
-
     if (usersError) throw new Error(`Error fetching users: ${usersError.message}`);
-    if (!usersData.length) throw new Error('No user data found.');
 
     // Fetch feedback data
     const { data: feedbackData, error: feedbackError } = await supabase
       .from('07_feedback')
       .select('user_id, submitted_at');
-
     if (feedbackError) throw new Error(`Error fetching feedback: ${feedbackError.message}`);
+
+    // Fetch user activity data
+    const { data: activityData, error: activityError } = await supabase
+      .from('03_activity_log') // Replace with your actual activity table name
+      .select('user_id, activity_type, activity_date');
+    if (activityError) throw new Error(`Error fetching activity data: ${activityError.message}`);
+
+    // Fetch rewards program participation data
+    const { data: rewardsData, error: rewardsError } = await supabase
+      .from('04_rewards') // Replace with your actual rewards program table name
+      .select('user_id, is_active');
+    if (rewardsError) throw new Error(`Error fetching rewards data: ${rewardsError.message}`);
 
     // Aggregate feedback count per user
     const feedbackCounts = feedbackData.reduce((acc, feedback) => {
@@ -40,40 +49,74 @@ app.post('/api/generate-reports', async (req, res) => {
       return acc;
     }, {});
 
+    // Aggregate activity count per user
+    const activityCounts = activityData.reduce((acc, activity) => {
+      acc[activity.user_id] = (acc[activity.user_id] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Aggregate rewards program participation per user
+    const rewardsParticipation = rewardsData.reduce((acc, reward) => {
+      acc[reward.user_id] = reward.is_active ? 'active' : 'inactive';
+      return acc;
+    }, {});
+
     // Fetch support tickets data
     const { data: ticketsData, error: ticketsError } = await supabase
       .from('05_support_ticket') // Replace with your actual table name
-      .select('ticket_id, updated_at, status');
-
+      .select('ticket_id, created_at, updated_at, status');
     if (ticketsError) throw new Error(`Error fetching tickets: ${ticketsError.message}`);
     if (!ticketsData.length) throw new Error('No ticket data found.');
 
     // Calculate ticket metrics
     const totalTickets = ticketsData.length;
     const resolvedTickets = ticketsData.filter((ticket) => ticket.status === 'resolved').length;
+
+    // Compute average resolution time
+    const resolutionTimes = ticketsData
+      .filter((ticket) => ticket.status === 'resolved' && ticket.updated_at)
+      .map((ticket) => {
+        const createdAt = new Date(ticket.created_at);
+        const updatedAt = new Date(ticket.updated_at);
+        return (updatedAt - createdAt) / (1000 * 60 * 60); // Difference in hours
+      });
+
     const avgResolutionTime =
-      ticketsData.reduce((sum, ticket) => sum + (ticket.resolution_time || 0), 0) / totalTickets || 0;
+      resolutionTimes.reduce((sum, time) => sum + time, 0) / (resolutionTimes.length || 1);
+
+    // Compute submission rate (tickets submitted per day)
+    const ticketsByDate = ticketsData.reduce((acc, ticket) => {
+      const date = ticket.created_at.split('T')[0];
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {});
+
+    const totalDays = Object.keys(ticketsByDate).length || 1; // Prevent divide by zero
+    const avgSubmissionRate = totalTickets / totalDays;
 
     // Prepare User Engagement Report
-    const userEngagementData = usersData.map((user) => ({
-      date: user.created_at.split('T')[0],
-      feedback_count: feedbackCounts[user.user_id] || 0,
-    }));
-
     const userEngagementReport = {
       report_type: 'User Engagement',
       generated_at: new Date().toISOString(),
-      data: JSON.stringify(userEngagementData),
+      data: JSON.stringify(
+        usersData.map((user) => ({
+          date: user.created_at.split('T')[0],
+          feedback_count: feedbackCounts[user.user_id] || 0,
+          activity_count: activityCounts[user.user_id] || 0,
+          rewards_status: rewardsParticipation[user.user_id] || 'inactive',
+        }))
+      ),
     };
 
-    // Prepare Ticket Metrics Report
+    // Prepare ticket metrics report
     const ticketMetricsReport = {
       report_type: 'Ticket Resolution Metrics',
       generated_at: new Date().toISOString(),
       data: JSON.stringify({
         total_tickets: totalTickets,
         resolution_rate: ((resolvedTickets / totalTickets) * 100).toFixed(2),
-        avg_response_time: avgResolutionTime.toFixed(2),
+        avg_response_time: avgResolutionTime.toFixed(2), // in hours
+        submission_rate: avgSubmissionRate.toFixed(2), // tickets per day
       }),
     };
 
@@ -81,7 +124,6 @@ app.post('/api/generate-reports', async (req, res) => {
     const { error: insertError } = await supabase
       .from('12_reports')
       .insert([userEngagementReport, ticketMetricsReport]);
-
     if (insertError) throw new Error(`Error inserting reports: ${insertError.message}`);
 
     console.log('Reports generated successfully!');
@@ -98,9 +140,8 @@ app.get('/api/reports/latest', async (req, res) => {
     const { data, error } = await supabase
       .from('12_reports')
       .select('*')
-      .order('generated_at', { ascending: false }) // Fetch the latest reports first
-      .limit(2); // Assuming you want the two latest reports
-
+      .order('generated_at', { ascending: false })
+      .limit(2);
     if (error) throw new Error(`Error fetching reports: ${error.message}`);
     if (!data.length) throw new Error('No reports found.');
 

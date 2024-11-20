@@ -20,11 +20,13 @@ h1 {
   text-align: center;
 }
 
-.report {
-  display: flex;
-  overflow: hidden; /* Hide any overflow for a cleaner layout */
-  text-align: center;
+.user-report, .ticket-report {
   margin-bottom: 10px;
+  padding: 5px;
+}
+
+.ticket-report h2 {
+  color: #D3D3D3;
 }
 
 .report-component {
