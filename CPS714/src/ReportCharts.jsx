@@ -141,7 +141,7 @@ const ReportsChart = () => {
         </div>
         <div className="ticket-report">
             <h2>Ticket Metrics Report</h2>
-            <Bar data={ticketMetricsChartData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
+            <Bar data={ticketMetricsChartData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} height={135} />
         </div>
     </div>
   );
