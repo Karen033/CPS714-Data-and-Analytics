@@ -1,45 +1,74 @@
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  background-color: rgb(41, 35, 53);
+  height: 100vh; /* Full viewport height */
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(133, 31, 197, 0.453); /* Optional shadow for separation */
+  position: fixed; /* Sticks the sidebar to the left */
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 10; /* Ensure it's on top of the main content */
+}
+
+/* Main Component */
+.main-component {
+  margin-left: 250px; /* Matches the sidebar width */
+  padding: 20px;
+  background-color: #ffffff; /* Background color for the main content */
+  border-radius: 8px; /* Optional */
+  box-shadow: 0 4px 8px rgba(168, 18, 18, 0.1); /* Optional */
+  height: 100vh; /* Full viewport height */
+  overflow-y: auto; /* Scroll if content overflows */
+  box-sizing: border-box; /* Ensure padding doesn't add to width */
+  width: 1670px; 
+}
+
+/* Global Reset */
 * {
   font-family: "Poppins", sans-serif;
   margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
-html, body, #root {
-  height: 100%;
-  font-family: Arial, sans-serif;
-  color: #333;
-  background-color: #f4f4f9;
-}
-
-h1 {
-  font-weight: 700;
-  font-style: normal;
-  font-size: 40px;
-  color: #0047ab;
-  text-align: center;
-}
-
-.user-report, .ticket-report {
-  margin-bottom: 10px;
-  padding: 5px;
-}
-
-.ticket-report h2 {
-  color: #D3D3D3;
-}
-
-.report-component {
-  background-color: white;
-  padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  align-items: center;
-  width: 210vh;
-  height: 100vh;
-}
-
+/* Button Adjustments */
 button {
+  width: 175px;
+  color: white;
   margin-bottom: 10px;
+}
+
+.genReport-button {
+  width: 175px;
+  margin-bottom: 10px;
+}
+
+.WB-toggle-button {
+  background-color: #0047ab;
+  color: white;
+  width: 175px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Headings */
+h1 {
+  font-size: 1.5rem;
+  color: #333;
+}
+
+p, h3 {
+  color: #333; /* Ensure it contrasts with the background */
+  font-size: 1rem; /* Ensure it's large enough to see */
+  margin: 10px 0; /* Add spacing */
+}
+
+.report-chart-container {
+  width: 100%; /* Ensure the container fills its parent */
+  height: 400px; /* Define an appropriate height */
+  max-width: 100%;
 }
