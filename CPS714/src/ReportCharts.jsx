@@ -155,6 +155,21 @@ const ReportsChart = ({ latestReport }) => {
           ],
         };
 
+
+
+        case 'User Engagement - Earnings':
+          return {
+            labels: parsedData.map((entry) => entry.earned_date),
+            datasets: [
+              {
+                label: 'Earned Reward Points',
+                data: parsedData.map((entry) => (entry.points_earned)),
+                backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1,
+              },
+            ],
+          };
       case 'User Engagement - Feedback':
         return {
           labels: parsedData.map((entry) => entry.feedback_dates),

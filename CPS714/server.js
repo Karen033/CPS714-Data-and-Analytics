@@ -56,6 +56,14 @@ app.post('/api/generate-reports', async (req, res) => {
       throw new Error(`Error fetching rewards data: ${rewardsError.message}`);
     }
 
+    const { data: earningsData, error: earningsError } = await supabase
+    .from('earnings')
+    .select('user_id, earned_date, points_earned')
+    .match(userFilter);
+
+    if (earningsError) {
+    throw new Error(`Error fetching rewards data: ${earningsError.message}`);
+    }
     // Fetch feedback data
     const { data: feedbackData, error: feedbackError } = await supabase
       .from('07_feedback')
@@ -75,6 +83,8 @@ app.post('/api/generate-reports', async (req, res) => {
 
         // Find rewards data for this user
         const userRewards = rewardsData.find((r) => r.user_id === user.user_id);
+
+        const userEarnings = earningsData.find((earning) => earning.user_id === user.user_id);
 
         return {
           user_id: user.user_id,
@@ -149,6 +159,28 @@ app.post('/api/generate-reports', async (req, res) => {
           redeemed_date: userRewards.redeemed_date,  // Add redeemed_date to the report data
         };
       });
+    
+      }else if (reportType === 'User Engagement - Earnings') {
+        const earningsMap = new Map(earningsData.map((earning) => [
+          earning.user_id, 
+          { 
+            points_earned: earning.points_earned || 0,
+            earned_date: earning.earned_date || null 
+          }
+        ]));
+  
+        
+      
+        // Map over the usersData to include earned_date and points_earned
+        reportData = usersData.map((user) => {
+          const userEarnings = earningsMap.get(user.user_id) || {  points_earned: 0, earned_date: null };
+          return {
+            user_id: user.user_id,
+            points_earned: userEarnings.points_earned,
+            earned_date: userEarnings.earned_date,  
+          };
+        });
+      
     } else if (reportType === 'Ticket Metrics') {
       const { data: ticketsData, error: ticketsError } = await supabase
         .from('05_support_ticket')
