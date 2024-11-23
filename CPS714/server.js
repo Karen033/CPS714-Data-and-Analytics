@@ -140,7 +140,7 @@ app.post('/api/generate-reports', async (req, res) => {
         }
       ]));
     
-      // Map over the usersData to include rewards_status and redeemed_date
+      // Map over the usersData to include points_redeemed and redeemed_date
       reportData = usersData.map((user) => {
         const userRewards = rewardsMap.get(user.user_id) || { points_redeemed: 0, redeemed_date: null };
         return {
