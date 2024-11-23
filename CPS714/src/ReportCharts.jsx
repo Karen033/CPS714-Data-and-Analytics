@@ -64,7 +64,7 @@ const ReportsChart = ({ latestReport }) => {
               yAxisID: 'y1',  // Using y1 axis for activity
             },
             {
-              label: 'Rewards Status',  // Showing rewards status as binary (1 or 0)
+              label: 'Redeemed Reward Points',  // Showing rewards status as binary (1 or 0)
               data: parsedData.map((entry) => (entry.points_redeemed)),
               backgroundColor: 'rgba(255, 159, 64, 0.6)',  // Orange for rewards
               borderColor: 'rgba(255, 159, 64, 1)',  // Darker orange for rewards
@@ -146,7 +146,7 @@ const ReportsChart = ({ latestReport }) => {
           labels: parsedData.map((entry) => entry.redeemed_date),
           datasets: [
             {
-              label: 'Rewards Status',
+              label: 'Redeemed Reward Points',
               data: parsedData.map((entry) => (entry.points_redeemed)),
               backgroundColor: 'rgba(255, 159, 64, 0.6)',
               borderColor: 'rgba(255, 159, 64, 1)',
