@@ -83,6 +83,7 @@ function Reports() {
             <option value="Ticket Metrics">Ticket Metrics</option>
             <option value="User Engagement - Activity">User Engagement - Activity</option>
             <option value="User Engagement - Rewards">User Engagement - Rewards</option>
+             <option value="User Engagement - Earnings">User Engagement - Earnings </option>
             <option value="User Engagement - Feedback">User Engagement - Feedback</option>
           </select>
         </div>
