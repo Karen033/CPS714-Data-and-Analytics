@@ -149,7 +149,29 @@ app.post('/api/generate-reports', async (req, res) => {
           redeemed_date: userRewards.redeemed_date,  // Add redeemed_date to the report data
         };
       });
-    } else if (reportType === 'Ticket Metrics') {
+    } 
+    else if (reportType === 'User Engagement - Earnings') {
+      const earningsMap = new Map(earningsData.map((earning) => [
+        earning.user_id, 
+        { 
+          points_earned: earning.points_earned || 0,
+          earned_date: earning.earned_date || null 
+        }
+      ]));
+
+      
+    
+      // Map over the usersData to include earned_date and points_earned
+      reportData = usersData.map((user) => {
+        const userEarnings = earningsMap.get(user.user_id) || {  points_earned: 0, earned_date: null };
+        return {
+          user_id: user.user_id,
+          points_earned: userEarnings.points_earned,
+          earned_date: userEarnings.earned_date,  
+        };
+      });
+    } 
+    else if (reportType === 'Ticket Metrics') {
       const { data: ticketsData, error: ticketsError } = await supabase
         .from('05_support_ticket')
         .select('ticket_id, user_id, created_at, updated_at, status')
