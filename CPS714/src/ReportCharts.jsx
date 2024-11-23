@@ -154,7 +154,7 @@ const ReportsChart = ({ latestReport }) => {
             },
           ],
         };
-      case 'User Engagement - Earnings':
+        case 'User Engagement - Earnings':
           return {
             labels: parsedData.map((entry) => entry.earned_date),
             datasets: [
@@ -167,6 +167,7 @@ const ReportsChart = ({ latestReport }) => {
               },
             ],
           };
+
       case 'User Engagement - Feedback':
         return {
           labels: parsedData.map((entry) => entry.feedback_dates),
