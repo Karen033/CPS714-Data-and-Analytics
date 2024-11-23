@@ -92,7 +92,7 @@ function Reports() {
           {users.map((user) =>
             user.status === 'Active' ? (
               <option key={user.user_id} value={user.user_id}>
-                {user.user_id}
+                User {user.user_id}
               </option>
             ) : null
           )}
