@@ -1,148 +1,193 @@
-import React, { useEffect, useState } from 'react';
-import { Bar, Line } from 'react-chartjs-2';
+import React, { useState } from 'react';
+import { Bar } from 'react-chartjs-2';
 import './Reports.css';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
-  PointElement,
-  LineElement,
   Title,
   Tooltip,
   Legend,
 } from 'chart.js';
 
-// Register the necessary Chart.js components
+// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
-  PointElement, // For Line charts
-  LineElement,  // For Line charts
   Title,
   Tooltip,
   Legend
 );
 
-const ReportsChart = () => {
-  const [userEngagementData, setUserEngagementData] = useState(null);
-  const [ticketMetricsData, setTicketMetricsData] = useState(null);
+const ReportsChart = ({ latestReport }) => {
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    // Fetch the latest reports
-    const fetchReports = async () => {
-      try {
-        const response = await fetch('http://localhost:5001/api/reports/latest');
-        if (!response.ok) {
-          throw new Error(`Failed to fetch reports: ${response.status}`);
-        }
+  if (!latestReport) {
+    return <p>Loading latest report...</p>;
+  }
 
-        const reports = await response.json();
-        console.log('Fetched Reports:', reports);
-
-        if (reports && reports.length > 0) {
-          const userEngagementReport = reports.find(
-            (report) => report.report_type === 'User Engagement'
-          );
-          const ticketMetricsReport = reports.find(
-            (report) => report.report_type === 'Ticket Resolution Metrics'
-          );
-
-          if (userEngagementReport) {
-            setUserEngagementData(JSON.parse(userEngagementReport.data));
-          }
-          if (ticketMetricsReport) {
-            setTicketMetricsData(JSON.parse(ticketMetricsReport.data));
-          }
-        } else {
-          setError('No reports available');
-        }
-      } catch (error) {
-        console.error('Error fetching reports:', error);
-        setError('Error fetching reports: ' + error.message);
-      }
-    };
-
-    fetchReports();
-  }, []);
+  // Parse the report's data
+  let parsedData = null;
+  try {
+    parsedData = JSON.parse(latestReport.data);
+  } catch (err) {
+    setError('Error parsing report data: ' + err.message);
+  }
 
   if (error) {
     return <p>{error}</p>;
   }
 
-  if (!userEngagementData || !ticketMetricsData) {
-    return <p>Loading reports...</p>;
-  }
+  // Configure chart data based on report type
+  const chartData = (() => {
+    switch (latestReport.report_type) {
+      case 'User Engagement':
+        return {
+          labels: parsedData.map((entry) => entry.created_at),  // X-axis: Date labels
+          datasets: [
+            {
+              label: 'Feedback Count',
+              data: parsedData.map((entry) => entry.feedback_count),
+              backgroundColor: 'rgba(75, 192, 192, 0.6)',  // Light blue for feedback
+              borderColor: 'rgba(75, 192, 192, 1)',  // Darker blue for feedback
+              borderWidth: 1,
+              yAxisID: 'y1',  // Using y1 axis for feedback
+            },
+            {
+              label: 'Activity Count',
+              data: parsedData.map((entry) => entry.activity_count),
+              backgroundColor: 'rgba(153, 102, 255, 0.6)',  // Purple for activity
+              borderColor: 'rgba(153, 102, 255, 1)',  // Darker purple for activity
+              borderWidth: 1,
+              yAxisID: 'y1',  // Using y1 axis for activity
+            },
+            {
+              label: 'Rewards Status',  // Showing rewards status as binary (1 or 0)
+              data: parsedData.map((entry) => (entry.points_redeemed)),
+              backgroundColor: 'rgba(255, 159, 64, 0.6)',  // Orange for rewards
+              borderColor: 'rgba(255, 159, 64, 1)',  // Darker orange for rewards
+              borderWidth: 1,
+              yAxisID: 'y2',  // Using y2 axis for rewards status (binary data)
+            },
+          ],
+          options: {
+            scales: {
+              y1: {
+                beginAtZero: true,  // Start y1 axis at zero
+                position: 'left',  // Place y1 axis on the left
+              },
+              y2: {
+                beginAtZero: true,  // Start y2 axis at zero
+                position: 'right',  // Place y2 axis on the right for binary data
+                grid: {
+                  drawOnChartArea: false,  // Hide gridlines for y2 to reduce clutter
+                },
+                ticks: {
+                  min: 0,
+                  max: 1,  // y2 axis for binary (1 or 0) data
+                },
+              },
+            },
+            responsive: true,  // Ensure the chart is responsive
+            plugins: {
+              legend: {
+                position: 'top',  // Position the legend on top of the chart
+              },
+            },
+          },
+        };
+      case 'Ticket Metrics':
+        return {
+          labels: ['Total Tickets', 'Resolution Rate (%)', 'Avg Response Time (hrs)', 'Submission Rate (tickets/day)'],
+          datasets: [
+            {
+              label: 'Ticket Metrics',
+              data: [
+                parsedData.total_tickets,
+                parsedData.resolution_rate,
+                parsedData.avg_response_time,
+                parsedData.submission_rate,
+              ],
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+              ],
+              borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+              ],
+              borderWidth: 1,
+            },
+          ],
+        };
 
-  // User Engagement Chart Data
-  const userEngagementChartData = {
-    labels: userEngagementData.map((entry) => entry.date),
-    datasets: [
-      {
-        label: 'Feedback Count',
-        data: userEngagementData.map((entry) => entry.feedback_count),
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Activity Count',
-        data: userEngagementData.map((entry) => entry.activity_count),
-        backgroundColor: 'rgba(153, 102, 255, 0.6)',
-        borderColor: 'rgba(153, 102, 255, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Rewards Status',
-        data: userEngagementData.map((entry) => (entry.rewards_status === 'active' ? 1 : 0)),
-        backgroundColor: 'rgba(255, 159, 64, 0.6)',
-        borderColor: 'rgba(255, 159, 64, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
+      case 'User Engagement - Activity':
+        return {
+          labels: parsedData.map((entry) => entry.activity_dates),
+          datasets: [
+            {
+              label: 'Activity Count',
+              data: parsedData.map((entry) => entry.activity_count),
+              backgroundColor: 'rgba(75, 192, 192, 0.6)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1,
+            },
+          ],
+        };
 
-  // Ticket Metrics Chart Data
-  const ticketMetricsChartData = {
-    labels: ['Total Tickets', 'Resolution Rate (%)', 'Avg Response Time (hrs)', 'Submission Rate (tickets/day)'],
-    datasets: [
-      {
-        label: 'Ticket Metrics',
-        data: [
-          ticketMetricsData.total_tickets,
-          ticketMetricsData.resolution_rate,
-          ticketMetricsData.avg_response_time,
-          ticketMetricsData.submission_rate,
-        ],
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-          'rgba(75, 192, 192, 0.6)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
+      case 'User Engagement - Rewards':
+        return {
+          labels: parsedData.map((entry) => entry.redeemed_date),
+          datasets: [
+            {
+              label: 'Rewards Status',
+              data: parsedData.map((entry) => (entry.points_redeemed)),
+              backgroundColor: 'rgba(255, 159, 64, 0.6)',
+              borderColor: 'rgba(255, 159, 64, 1)',
+              borderWidth: 1,
+            },
+          ],
+        };
+
+      case 'User Engagement - Feedback':
+        return {
+          labels: parsedData.map((entry) => entry.feedback_dates),
+          datasets: [
+            {
+              label: 'Feedback Count',
+              data: parsedData.map((entry) => entry.feedback_count),
+              backgroundColor: 'rgba(153, 102, 255, 0.6)',
+              borderColor: 'rgba(153, 102, 255, 1)',
+              borderWidth: 1,
+            },
+          ],
+        };
+
+      default:
+        return null;
+    }
+  })();
 
   return (
     <div className="report-component">
-        <div className="user-report">
-            <h2>User Engagement Report</h2>
-            <Bar data={userEngagementChartData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} height={135} />
+      <h2>{latestReport.report_type} Report</h2>
+      {chartData ? (
+        <div className="chart-container">
+          <Bar
+            data={chartData}
+            options={{ responsive: true, plugins: { legend: { position: 'top' } } }}
+            height={135}
+          />
         </div>
-        <div className="ticket-report">
-            <h2>Ticket Metrics Report</h2>
-            <Bar data={ticketMetricsChartData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} height={135} />
-        </div>
+      ) : (
+        <p>No data available for the selected report</p>
+      )}
     </div>
   );
 };
