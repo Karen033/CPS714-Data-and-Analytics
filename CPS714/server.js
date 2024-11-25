@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 5001;
 
 // Supabase configuration
 const supabaseUrl = 'https://whkhxoqclrbwsapozcsx.supabase.co';
-const supabaseKey = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoa2h4b3FjbHJid3NhcG96Y3N4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMDkyMjY5MywiZXhwIjoyMDQ2NDk4NjkzfQ.R38BFg2TCYj0JjbaVx5EPRoo6SfCHSXBbF2VTz2SAhc'; // Replace with your key or securely fetch it.
+const supabaseKey = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indoa2h4b3FjbHJid3NhcG96Y3N4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMDkyMjY5MywiZXhwIjoyMDQ2NDk4NjkzfQ.R38BFg2TCYj0JjbaVx5EPRoo6SfCHSXBbF2VTz2SAhc'; 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Middleware
